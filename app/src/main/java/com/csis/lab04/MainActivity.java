@@ -36,14 +36,14 @@ public class MainActivity extends AppCompatActivity {
 
     private PdUiDispatcher dispatcher; //must declare this to use later, used to receive data from sendEvents
 
-    @Override
+TextView myCounter;    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);//Mandatory
         setContentView(R.layout.activity_main);//Mandatory
 
 
         Switch onOffSwitch = (Switch) findViewById(R.id.onOffSwitch);//declared the switch here pointing to id onOffSwitch
-
+myCounter = (TextView) findViewById(R.id.counter);
         //Check to see if switch1 value changes
         onOffSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -114,6 +114,55 @@ public class MainActivity extends AppCompatActivity {
         dispatcher = new PdUiDispatcher(); //create UI dispatcher
         PdBase.setReceiver(dispatcher); //set dispatcher to receive items from puredata patches
 
+        dispatcher.addListener("sendCounter",receiver1);
+        PdBase.subscribe("sendCounter");
     }
+    private PdReceiver receiver1 = new PdReceiver() {
 
+        private void pdPost(final String msg) {
+            Log.e("RECEIVED:", msg);
+
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                }
+            });
+        }
+
+        @Override
+        public void print(String s) {
+            Log.i("PRINT",s);
+            Toast.makeText(getBaseContext(),s,Toast.LENGTH_LONG);
+        }
+
+        @Override
+        public void receiveBang(String source)
+        {
+            pdPost("bang");
+        }
+
+        @Override
+        public void receiveFloat(String source, float x) {
+            pdPost("float: " + x);
+            if(source.equals("sendCounter")) {
+                myCounter.setText(String.valueOf(x));
+            }
+        }
+
+        @Override
+        public void receiveList(String source, Object... args) {
+            pdPost("list: " + Arrays.toString(args));
+
+        }
+
+        @Override
+        public void receiveMessage(String source, String symbol, Object... args) {
+            pdPost("message: " + Arrays.toString(args));
+        }
+
+        @Override
+        public void receiveSymbol(String source, String symbol) {
+            pdPost("symbol: " + symbol);
+        }
+    };
 }
